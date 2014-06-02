@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<VisualStudioPropertySheet
+	ProjectType="Visual C++"
+	Version="8.00"
+	Name="sqlite"
+	>
+	<Tool
+		Name="VCCLCompilerTool"
+		AdditionalIncludeDirectories="&quot;$(ResultIncludeDir)\sqlite&quot;"
+		PreprocessorDefinitions="SQLITE_ENABLE_COLUMN_METADATA;SQLITE_ENABLE_RTREE"
+	/>
+	<Tool
+		Name="VCLinkerTool"
+		AdditionalDependencies="sqlite-vc90-mt$(BoostDebugSuffix)$(AdditionalLibPlatformName)-3_8_0_1.lib"
+	/>
+</VisualStudioPropertySheet>
