@@ -343,12 +343,15 @@ int sqlite3CodecAttach(sqlite3 *db, int nDb, const void *zKey, int nKey)
 
                // инициализация объекта для проверки crc
                crc_impl = ( check_crc* )malloc( sizeof( check_crc ) );
-               crc_impl->xCheckCrc = CheckMD5;
-               crc_impl->xGetCrc = GetMD5Binary;
-               crc_impl->xGetCrcLength = GetMD5Length;
-               SetCheckedMethods( ch_codec, crc_impl );
+               InitializeCheckCrc( crc_impl
+                    , CheckMD5
+                    , GetMD5Binary 
+                    , GetMD5Length );
 
-               SetCheckedCodecBtree( ch_codec, db->aDb[nDb].pBt );
+               // инициализация кодека
+               InitializeCheckedCodec( ch_codec
+                    , db->aDb[nDb].pBt
+                    , crc_impl );
 
                // установка резервирования на странице
                rc = SetDbReservedState( db, ch_codec->btree, crc_impl );

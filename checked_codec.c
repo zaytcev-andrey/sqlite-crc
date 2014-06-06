@@ -1,11 +1,19 @@
 #include "checked_codec.h"
 
-void SetCheckedCodecBtree( checked_codec* codec, Btree* btree )
+void InitializeCheckCrc( check_crc* crc
+                        , PFGetCrc xGetCrc
+                        , PFCheckCrc xCheckCrc
+                        , PFGetCrcLength xGetCrcLength )
 {
-     codec->btree = btree;
+     crc->xCheckCrc = xGetCrc;
+     crc->xGetCrc = xCheckCrc;
+     crc->xGetCrcLength = xGetCrcLength;
 }
 
-void SetCheckedMethods( checked_codec* codec, check_crc* crc_methods )
+void InitializeCheckedCodec( checked_codec* codec
+                            , Btree* btree
+                            , check_crc* crc_methods )
 {
+     codec->btree = btree;
      codec->crc_methods = crc_methods;
 }
