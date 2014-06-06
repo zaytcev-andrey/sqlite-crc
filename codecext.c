@@ -2,6 +2,7 @@
 #include "checked_codec.c"
 #include "md5.h"
 #include "freelist_set.h"
+#include "utils.h"
 
 #include <stdio.h>
 
@@ -115,7 +116,6 @@ typedef struct DB_INFO
 
 static int ReadDbHeader( sqlite3_file* f_db, db_info* db_i );
 static int ReadDbPage( sqlite3_file* f_db, db_info* db_i );
-static int ConvertFromBigEndian( char* buff, int size );
 static int GetDbOpenState( Btree* btree, db_info* db_i );
 static int SetDbReservedState( sqlite3* db, Btree* btree, check_crc* crc_impl );
 
@@ -284,38 +284,6 @@ int ReadDbPage( sqlite3_file* f_db, db_info* db_i )
      }
 
      return rc;
-}
-
-int ConvertFromBigEndian( unsigned char* buff, int size )
-{
-     static int bing_endian = -1;
-     unsigned int res = 0;
-     int idx = 0;
-
-     if ( bing_endian < 0 )
-     {
-          /* Are we little or big endian? This method is from Harbison & Steele. */
-          union
-          {
-               long l;
-               char c[ sizeof( long ) ];
-          } u;
-          u.l = 1;
-          bing_endian = ( u.c[0] != 1 ) ? 1 : 0;
-     }
-
-     if ( bing_endian != 1 )
-     {
-          for ( idx = size - 1; idx >= 0; idx-- )
-          {
-               res += buff[ idx ] << 8 * ( size - idx - 1 );
-          }
-          return res;
-     }
-
-     memcpy( buff, &res, size );
-
-     return res;
 }
 
 int sqlite3CodecAttach(sqlite3 *db, int nDb, const void *zKey, int nKey)

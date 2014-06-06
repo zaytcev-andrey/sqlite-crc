@@ -649,6 +649,10 @@
 				RelativePath="sqlite3.def"
 				>
 			</File>
+			<File
+				RelativePath=".\utils.c"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -681,6 +685,10 @@
 			</File>
 			<File
 				RelativePath="sqlite\sqlite3ext.h"
+				>
+			</File>
+			<File
+				RelativePath=".\utils.h"
 				>
 			</File>
 		</Filter>
