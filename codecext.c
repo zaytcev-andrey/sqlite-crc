@@ -31,7 +31,7 @@ void sqlite3CodecSizeChange(void *pCodec, int pageSize, int nReserve)
 {
 }
 
-void* GetPageCopyWithReservedSpace( void* data, int page_size, Codec* codec )
+void* GetPageCopyWithReservedSpace( void* data, int page_size, checked_codec* ch_codec )
 {
      int* reserved_value = 0;
      unsigned char hash[ HASH_SIZE ];
@@ -39,7 +39,7 @@ void* GetPageCopyWithReservedSpace( void* data, int page_size, Codec* codec )
      memcpy( page_buff, data, page_size - HASH_SIZE );
      memset( hash, 0, sizeof( hash ) );
      
-     if ( codec )
+     if ( ch_codec )
      {
           GetMD5Binary( page_buff, page_size - HASH_SIZE, hash );
      }
@@ -51,22 +51,20 @@ void* GetPageCopyWithReservedSpace( void* data, int page_size, Codec* codec )
 // Encrypt/Decrypt functionality, called by pager.c
 void* sqlite3Codec(void *pCodec, void *data, Pgno nPageNum, int nMode)
 {
-     Codec* codec = NULL;
+     checked_codec* ch_codec = NULL;
      int* reserved = 0;
      int pageSize = 0;
      int reserve = 0;
-     if (pCodec == NULL)
+
+     if ( pCodec == NULL )
      {
           return data;
      }
-     codec = (Codec*)pCodec;
-     /*if ( !CodecIsEncrypted(codec) )
-     {
-          return data;
-     }*/
 
-     pageSize = sqlite3BtreeGetPageSize(CodecGetBtree(codec));
-     reserve = sqlite3BtreeGetReserve( CodecGetBtree(codec) );
+     ch_codec = ( checked_codec* )pCodec;
+
+     pageSize = sqlite3BtreeGetPageSize( ch_codec->btree );
+     reserve = sqlite3BtreeGetReserve( ch_codec->btree );
 
      reserved = ( int* )( ( char* )data + pageSize );
 
@@ -78,7 +76,7 @@ void* sqlite3Codec(void *pCodec, void *data, Pgno nPageNum, int nMode)
           break;
                
           case 6: /* Encrypt a page for the main database file */
-               data = GetPageCopyWithReservedSpace( data, pageSize, codec );
+               data = GetPageCopyWithReservedSpace( data, pageSize, ch_codec );
           break;
 
           case 7: /* Encrypt a page for the journal file */
@@ -90,7 +88,7 @@ void* sqlite3Codec(void *pCodec, void *data, Pgno nPageNum, int nMode)
           the database's readkey, which is guaranteed to be the same key that was used to
           read the original data.
           */
-          data = GetPageCopyWithReservedSpace( data, pageSize, codec );
+          data = GetPageCopyWithReservedSpace( data, pageSize, ch_codec );
           break;
   }
 
@@ -289,9 +287,6 @@ int ReadDbPage( sqlite3_file* f_db, db_info* db_i )
 int sqlite3CodecAttach(sqlite3 *db, int nDb, const void *zKey, int nKey)
 {
      /* Attach a key to a database. */
-     Codec* codec = (Codec*) sqlite3_malloc(sizeof(Codec));
-     checked_codec* ch_codec = (checked_codec*)sqlite3_malloc( sizeof( checked_codec ) );
-     CodecInit(codec);
 
      /* No key specified, could mean either use the main db's encryption or no encryption */
      if (zKey == NULL || nKey <= 0)
@@ -306,6 +301,7 @@ int sqlite3CodecAttach(sqlite3 *db, int nDb, const void *zKey, int nKey)
 
           sqlite3BtreeEnter( pBt );
           {
+               checked_codec* ch_codec = (checked_codec*)sqlite3_malloc( sizeof( checked_codec ) );
                check_crc* crc_impl = 0;
                db_info* db_i = 0;
 
