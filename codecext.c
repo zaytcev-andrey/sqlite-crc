@@ -1,4 +1,3 @@
-#include "codec.c"
 #include "checked_codec.c"
 #include "md5.h"
 #include "freelist_set.h"
@@ -33,18 +32,23 @@ void sqlite3CodecSizeChange(void *pCodec, int pageSize, int nReserve)
 
 void* GetPageCopyWithReservedSpace( void* data, int page_size, checked_codec* ch_codec )
 {
-     int* reserved_value = 0;
-     unsigned char hash[ HASH_SIZE ];
+     const int hash_size = ch_codec->crc_methods->xGetCrcLength();
+     const int page_data_size = page_size - hash_size;
+
+     unsigned char* hash = malloc( hash_size );
      unsigned char* page_buff = malloc( page_size );
-     memcpy( page_buff, data, page_size - HASH_SIZE );
+
+     memcpy( page_buff, data, page_data_size );
      memset( hash, 0, sizeof( hash ) );
      
      if ( ch_codec )
      {
-          GetMD5Binary( page_buff, page_size - HASH_SIZE, hash );
+          ch_codec->crc_methods->xGetCrc( page_buff, page_data_size, hash );
      }
 
-     memcpy( page_buff + page_size - HASH_SIZE, hash, HASH_SIZE );
+     memcpy( page_buff + page_data_size, hash, hash_size );
+     free( hash );
+
      return page_buff;
 }
 
@@ -52,7 +56,6 @@ void* GetPageCopyWithReservedSpace( void* data, int page_size, checked_codec* ch
 void* sqlite3Codec(void *pCodec, void *data, Pgno nPageNum, int nMode)
 {
      checked_codec* ch_codec = NULL;
-     int* reserved = 0;
      int pageSize = 0;
      int reserve = 0;
 
@@ -65,8 +68,6 @@ void* sqlite3Codec(void *pCodec, void *data, Pgno nPageNum, int nMode)
 
      pageSize = sqlite3BtreeGetPageSize( ch_codec->btree );
      reserve = sqlite3BtreeGetReserve( ch_codec->btree );
-
-     reserved = ( int* )( ( char* )data + pageSize );
 
      switch(nMode)
      {
