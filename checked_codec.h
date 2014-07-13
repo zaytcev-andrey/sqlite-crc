@@ -1,24 +1,7 @@
 #ifndef checked_codec_h__
 #define checked_codec_h__
 
-/// @brief Объявления типов методов
-typedef void (*PFGetCrc)( unsigned char* /*data*/, int /*length*/, unsigned char* /*digest*/ );
-typedef void (*PFCheckCrc)( unsigned char* /*data*/, int /*length*/, unsigned char* /*crc*/ );
-typedef unsigned int (*PFGetCrcLength)();
-
-/// @brief Интерфейс для расчета контрольных сумм
-typedef struct CHECK_CRC
-{
-     PFGetCrc xGetCrc;
-     PFCheckCrc xCheckCrc;
-     PFGetCrcLength xGetCrcLength;
-} check_crc;
-
-/// @brief Инициализация объекта расчета контрольных сумм
-void InitializeCheckCrc( check_crc* crc
-     , PFGetCrc xGetCrc
-     , PFCheckCrc xCheckCrc
-     , PFGetCrcLength xGetCrcLength );
+#include "i_check_crc.h"
 
 /// @brief Интерфейс кодека с поддержкой контрольных сумм, без шифрования
 typedef struct CHECKED_CODEC

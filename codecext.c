@@ -1,4 +1,6 @@
+#include "md5.h"
 #include "checked_codec.c"
+#include "db_state.c"
 #include "db_page_reader.c"
 
 #include <stdio.h>
@@ -26,33 +28,7 @@ void sqlite3CodecSizeChange(void *pCodec, int pageSize, int nReserve)
 {
 }
 
-static int GetDbOpenState( Btree* btree, db_info* db_i );
 static int SetDbReservedState( sqlite3* db, Btree* btree, check_crc* crc_impl );
-
-int GetDbOpenState( Btree* btree, db_info* db_i )
-{
-     sqlite3_file* f_db = sqlite3BtreePager( btree )->fd;
-
-     int rc = SQLITE_ERROR;
-     db_i->open_state = DB_CLOSED;
-
-     if( !isOpen( f_db ) )
-     {
-          rc = sqlite3OsFileSize( f_db, &db_i->file_size );
-          if( rc == SQLITE_IOERR_SHORT_READ )
-          {
-               rc = SQLITE_OK;
-          }
-
-          if ( rc == SQLITE_OK )
-          {
-               db_i->open_state = db_i->file_size ? 
-                    DB_OPENED_EXISTING : DB_OPENED_CREATING;
-          }
-     }
-
-     return rc;
-}
 
 int SetDbReservedState( sqlite3* db, Btree* btree, check_crc* crc_impl )
 {
@@ -158,7 +134,7 @@ int sqlite3CodecAttach(sqlite3 *db, int nDb, const void *zKey, int nKey)
           {
                checked_codec* ch_codec = (checked_codec*)sqlite3_malloc( sizeof( checked_codec ) );
                check_crc* crc_impl = 0;
-               db_info* db_i = 0;
+               db_open_state open_state = DB_CLOSED;
 
                // инициализация объекта для проверки crc
                crc_impl = ( check_crc* )malloc( sizeof( check_crc ) );
@@ -188,17 +164,15 @@ int sqlite3CodecAttach(sqlite3 *db, int nDb, const void *zKey, int nKey)
                     ch_codec ); 
 
                // определение состояния базы
-               db_i = malloc( sizeof( db_info ) );
-               rc = GetDbOpenState( ch_codec->btree, db_i );
+               rc = GetDbOpenState( ch_codec->btree, &open_state );
 
                // проверка контрольных сумм только на существующей базе,
                // на только что созданной не проверяется.
-               if ( rc == SQLITE_OK && db_i->open_state == DB_OPENED_EXISTING )
+               if ( rc == SQLITE_OK && open_state == DB_OPENED_EXISTING )
                {
                     Pager* pager = 0;
                     pager = sqlite3BtreePager( pBt );
-                    rc = ReadDbFile( pager->fd, db_i );
-                    free( db_i );
+                    rc = ReadDbFile( pager->fd, ch_codec->crc_methods );
                }
           }
           sqlite3BtreeLeave( pBt );

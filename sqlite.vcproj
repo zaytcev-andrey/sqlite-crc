@@ -630,6 +630,17 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath=".\db_state.c"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
 				RelativePath=".\freelist_set.cpp"
 				>
 			</File>
@@ -644,6 +655,14 @@
 			<File
 				RelativePath="sqlite3.c"
 				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="sqlite3.def"
@@ -668,7 +687,19 @@
 				>
 			</File>
 			<File
+				RelativePath=".\db_state.h"
+				>
+			</File>
+			<File
 				RelativePath=".\freelist_set.h"
+				>
+			</File>
+			<File
+				RelativePath=".\i_check_crc.h"
+				>
+			</File>
+			<File
+				RelativePath=".\i_sqlite_internal_methods.h"
 				>
 			</File>
 			<File
@@ -691,12 +722,6 @@
 				RelativePath=".\utils.h"
 				>
 			</File>
-		</Filter>
-		<Filter
-			Name="Resource Files"
-			Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav"
-			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}"
-			>
 		</Filter>
 	</Files>
 	<Globals>

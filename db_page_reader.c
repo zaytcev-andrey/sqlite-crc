@@ -1,10 +1,6 @@
 #include "utils.h"
-#include "md5.h"
+#include "i_check_crc.h"
 #include "freelist_set.h"
-
-#define HASH_SIZE 16
-
-typedef enum { DB_OPENED_CREATING, DB_OPENED_EXISTING, DB_CLOSED } db_open_state;
 
 typedef struct DB_INFO 
 {
@@ -20,24 +16,37 @@ typedef struct DB_INFO
      unsigned char* page_buff;
 } db_info;
 
-static int ReadDbFile( sqlite3_file* f_db, db_info* db_i );
+int InitializeDbInfo( sqlite3_file* f_db, db_info* db_i )
+{
+     memset( &db_i, 0, sizeof( db_info ) );
+
+     return sqlite3OsFileSize( f_db, &db_i->file_size );
+}
+
+static int ReadDbFile( sqlite3_file* f_db, check_crc* crc );
 static int ReadDbHeader( sqlite3_file* f_db, db_info* db_i );
-static int ReadDbPage( sqlite3_file* f_db, db_info* db_i );
+static int ReadDbPage( sqlite3_file* f_db, db_info* db_i, check_crc* crc );
 
-
-int ReadDbFile( sqlite3_file* f_db, db_info* db_i )
+int ReadDbFile( sqlite3_file* f_db, check_crc* crc )
 {
      int res = SQLITE_ERROR;
+     db_info db_i;
+     
+     memset( &db_i, 0, sizeof( db_info ) );
 
-     memset( db_i, 0, sizeof( db_info ) );
-
-     res = ReadDbHeader( f_db, db_i );
+     res = InitializeDbInfo( f_db, &db_i );
      if ( res != SQLITE_OK )
      {
           return res;
      }
 
-     res = ReadDbPage( f_db, db_i );
+     res = ReadDbHeader( f_db, &db_i );
+     if ( res != SQLITE_OK )
+     {
+          return res;
+     }
+
+     res = ReadDbPage( f_db, &db_i, crc );
 
      return res;
 }
@@ -74,12 +83,13 @@ int ReadDbHeader( sqlite3_file* f_db, db_info* db_i )
      return rc;
 }
 
-int ReadDbPage( sqlite3_file* f_db, db_info* db_i )
+int ReadDbPage( sqlite3_file* f_db, db_info* db_i, check_crc* crc  )
 {
      unsigned char page_type = 0;
-     unsigned char reversed[ HASH_SIZE ];
+     const int hash_size = crc->xGetCrcLength();
+     unsigned char* reversed = malloc( hash_size );
      int page_length = db_i->page_size;
-     int page_data_lenght = page_length ? page_length - HASH_SIZE : 0; // FIXME сделать обработку первичного старта
+     int page_data_lenght = page_length ? page_length - hash_size : 0; // FIXME сделать обработку первичного старта
      int md5_check_result = CHECKSUM_ERROR;
      int rc = SQLITE_ERROR;
 
@@ -124,9 +134,11 @@ int ReadDbPage( sqlite3_file* f_db, db_info* db_i )
           }
           else
           {
-               memcpy( reversed, db_i->page_buff + page_length - HASH_SIZE, HASH_SIZE );
+               memcpy( reversed, db_i->page_buff + page_length - hash_size, hash_size );
 
                md5_check_result = CheckMD5( db_i->page_buff, page_data_lenght, reversed );
+
+               free( reversed );
           }
 
           if ( md5_check_result == CHECKSUM_SUCCESS )
@@ -136,7 +148,7 @@ int ReadDbPage( sqlite3_file* f_db, db_info* db_i )
 
                if ( db_i->current_page_offset < db_i->file_size )
                {
-                    return ReadDbPage( f_db, db_i );
+                    return ReadDbPage( f_db, db_i, crc );
                }
 
                return SQLITE_OK;
