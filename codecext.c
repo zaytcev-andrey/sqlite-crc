@@ -1,7 +1,8 @@
 #include "md5.h"
 #include "checked_codec.c"
-#include "db_state.c"
+#include "db_state.h"
 #include "db_page_reader.c"
+#include "i_sqlite_internal_methods.h"
 
 #include <stdio.h>
 
@@ -115,6 +116,14 @@ void* sqlite3Codec(void *pCodec, void *data, Pgno nPageNum, int nMode)
 
 }
 
+/// wrapper methods for internal
+static sqlite3_file* GetDbFileDescriptor( Btree* btree )
+{
+     return sqlite3BtreePager( btree )->fd;
+}
+ 
+///
+
 int sqlite3CodecAttach(sqlite3 *db, int nDb, const void *zKey, int nKey)
 {
      /* Attach a key to a database. */
@@ -134,6 +143,7 @@ int sqlite3CodecAttach(sqlite3 *db, int nDb, const void *zKey, int nKey)
           {
                checked_codec* ch_codec = (checked_codec*)sqlite3_malloc( sizeof( checked_codec ) );
                check_crc* crc_impl = 0;
+               sqlite_internal_methods int_methods;
                db_open_state open_state = DB_CLOSED;
 
                // инициализация объекта для проверки crc
@@ -147,6 +157,9 @@ int sqlite3CodecAttach(sqlite3 *db, int nDb, const void *zKey, int nKey)
                InitializeCheckedCodec( ch_codec
                     , db->aDb[nDb].pBt
                     , crc_impl );
+
+               InitializeInternalMethods( &int_methods
+                    , GetDbFileDescriptor );
 
                // установка резервирования на странице
                rc = SetDbReservedState( db, ch_codec->btree, crc_impl );
@@ -164,7 +177,7 @@ int sqlite3CodecAttach(sqlite3 *db, int nDb, const void *zKey, int nKey)
                     ch_codec ); 
 
                // определение состояния базы
-               rc = GetDbOpenState( ch_codec->btree, &open_state );
+               rc = GetDbOpenState( ch_codec->btree, &open_state, &int_methods );
 
                // проверка контрольных сумм только на существующей базе,
                // на только что созданной не проверяется.

@@ -161,40 +161,61 @@ int create_and_close_test_db( const char* db_path )
 // Unit tests
 
 static Btree btree_mock;
-static sqlite_internal_methods internal_methods;
-static sqlite3_file fd_db;
+static sqlite_internal_methods internal_methods_;
+static sqlite3_file fd_db_;
+static sqlite3_io_methods io_methods_;
 static int file_size_;
 
-static sqlite3_file* mock_get_file_descriptor( Btree* btree )
+sqlite3_file* mock_get_file_descriptor( Btree* btree )
 {
-     return &fd_db;
+     return &fd_db_;
 }
 
-static int mock_get_db_file_size( sqlite3_file* fd, sqlite3_int64 *pSize )
+int mock_get_db_file_size( sqlite3_file* fd, sqlite3_int64 *pSize )
 {
      *pSize = file_size_;
 
      return SQLITE_OK;
 }
 
-int setup_db_closed_state()
+int setup_get_db_state()
 {
-     internal_methods.xGetDbFileDescriptor = mock_get_file_descriptor;
-     memset( &fd_db, 0, sizeof( sqlite3_file ) );
-     fd_db.pMethods = 0;     
+     memset( &fd_db_, 0, sizeof( sqlite3_file ) );
+     io_methods_.xFileSize = mock_get_db_file_size;
+     internal_methods_.xGetDbFileDescriptor = mock_get_file_descriptor;
+     return 0;
 }
 
 int teardown_db_state()
 {
-     memset( &internal_methods, 0, sizeof( sqlite_internal_methods ) );
-     memset( &fd_db, 0, sizeof( sqlite3_file ) );
+     memset( &internal_methods_, 0, sizeof( sqlite_internal_methods ) );
+     memset( &fd_db_, 0, sizeof( sqlite3_file ) );
+     return 0;
 }
 
 void get_db_closed_state_test()
 {
-     db_open_state open_state = DB_CLOSED;
+     db_open_state open_state = DB_OPENED_EXISTING;
 
-     GetDbOpenState( &btree_mock, &open_state, &internal_methods );
+     // closed database
+     fd_db_.pMethods = 0; 
+
+     GetDbOpenState( &btree_mock, &open_state, &internal_methods_ );
+
+     CU_ASSERT( open_state == DB_CLOSED );
+}
+
+void get_db_open_creating_state_test()
+{
+     db_open_state open_state = DB_CLOSED; 
+
+     // just opened database, db file does not exist
+     fd_db_.pMethods = &io_methods_;
+     file_size_ = 0;
+     
+     GetDbOpenState( &btree_mock, &open_state, &internal_methods_ );
+
+     CU_ASSERT( open_state == DB_OPENED_CREATING );
 }
 
 int _tmain(int argc, _TCHAR* argv[])
@@ -208,9 +229,13 @@ int _tmain(int argc, _TCHAR* argv[])
 
      CU_initialize_registry();
 
-     get_state_suite = CU_add_suite( "get db closed state suite", setup_db_closed_state, teardown_db_state );
+     get_state_suite = CU_add_suite( "get db closed state suite"
+          , setup_get_db_state, teardown_db_state );
+     CU_add_test( get_state_suite
+          , "get db closed state test", get_db_closed_state_test );
 
-     CU_add_test( get_state_suite, "get db state test", get_db_closed_state_test );
+     CU_add_test( get_state_suite
+          , "get db creating state test", get_db_open_creating_state_test );
      
      CU_basic_set_mode( CU_BRM_VERBOSE );
      CU_set_error_action( CUEA_IGNORE );

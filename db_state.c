@@ -4,13 +4,13 @@ static int isOpen( sqlite3_file* f_db );
 
 int GetDbOpenState( Btree* btree, db_open_state* state, sqlite_internal_methods* int_methods )
 {
-     sqlite3_file* f_db = int_methods->xGetDbFileDescriptor( btree ); // sqlite3BtreePager
+     sqlite3_file* f_db = int_methods->xGetDbFileDescriptor( btree ); // sqlite3BtreePager( btree )->fd
      sqlite3_int64 file_size = 0;
 
      int rc = SQLITE_ERROR;
      *state = DB_CLOSED;
 
-     if( !isOpen( f_db ) )
+     if( isOpen( f_db ) )
      {
           rc = f_db->pMethods->xFileSize( f_db, &file_size ); // sqlite3OsFileSize
                

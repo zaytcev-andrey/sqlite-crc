@@ -14,4 +14,7 @@ typedef struct SQLITE_INTERNAL_METHODS
      PFGetDbFileDescriptor xGetDbFileDescriptor;
 } sqlite_internal_methods;
 
+void InitializeInternalMethods( sqlite_internal_methods* internal
+     , PFGetDbFileDescriptor xGetDbFileDescriptor );
+
 #endif // i_sqlite_internal_h__
