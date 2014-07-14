@@ -17,7 +17,9 @@
 // mocks
 #include "sqlite_mocks.h"
 
+// test items
 #include "db_state.h"
+#include "db_page_reader_impl.h"
 
 static const char* dbname_ref = "./testdb_ref";
 static const char* key = "anotherkey";
@@ -165,6 +167,7 @@ static sqlite_internal_methods internal_methods_;
 static sqlite3_file fd_db_;
 static sqlite3_io_methods io_methods_;
 static int file_size_;
+static db_info db_info_;
 
 sqlite3_file* mock_get_file_descriptor( Btree* btree )
 {
@@ -193,6 +196,7 @@ int teardown_db_state()
      return 0;
 }
 
+/// @brief closed database test
 void get_db_closed_state_test()
 {
      db_open_state open_state = DB_OPENED_EXISTING;
@@ -205,6 +209,7 @@ void get_db_closed_state_test()
      CU_ASSERT( open_state == DB_CLOSED );
 }
 
+/// @brief created database test
 void get_db_open_creating_state_test()
 {
      db_open_state open_state = DB_CLOSED; 
@@ -218,47 +223,89 @@ void get_db_open_creating_state_test()
      CU_ASSERT( open_state == DB_OPENED_CREATING );
 }
 
+/// @brief existing database test
+void get_db_open_existing_state_test()
+{
+     db_open_state open_state = DB_CLOSED; 
+     const int fake_size = 1024; 
+
+     // just opened already existed database
+     fd_db_.pMethods = &io_methods_;
+     file_size_ = fake_size;
+
+     GetDbOpenState( &btree_mock, &open_state, &internal_methods_ );
+
+     CU_ASSERT( open_state == DB_OPENED_EXISTING );
+}
+
+/// @brief read database header test
+void read_db_header_test()
+{
+     ReadDbHeader( &fd_db_, &db_info_ );
+
+     CU_ASSERT( 0 );
+}
+
 int _tmain(int argc, _TCHAR* argv[])
 {
      sqlite3 * db;
      char * error=0;
 
-     int rc = SQLITE_ERROR;
-
-     CU_pSuite get_state_suite = 0;
-
      CU_initialize_registry();
 
-     get_state_suite = CU_add_suite( "get db closed state suite"
-          , setup_get_db_state, teardown_db_state );
-     CU_add_test( get_state_suite
-          , "get db closed state test", get_db_closed_state_test );
+     // get db state test suite
+     {
+          CU_pSuite get_state_suite = CU_add_suite( "get db state suite"
+               , setup_get_db_state, teardown_db_state );
 
-     CU_add_test( get_state_suite
-          , "get db creating state test", get_db_open_creating_state_test );
+          CU_add_test( get_state_suite
+               , "get db closed state test", get_db_closed_state_test );
+
+          CU_add_test( get_state_suite
+               , "get db creating state test", get_db_open_creating_state_test );
+
+          CU_add_test( get_state_suite
+               , "get db existing state test", get_db_open_existing_state_test );
+     }
+
+     // read db page test suite
+     {
+          CU_pSuite read_page_suite = CU_add_suite( "read db page test suite"
+               , 0, 0 );
+
+          CU_add_test( read_page_suite
+               , "read database header test", read_db_header_test );
+     }
      
      CU_basic_set_mode( CU_BRM_VERBOSE );
      CU_set_error_action( CUEA_IGNORE );
 
      CU_basic_run_tests();
      CU_cleanup_registry();
-
-
-     rc = create_and_close_test_db( dbname_ref );
-
-     if ( rc != SQLITE_OK) { fprintf(stderr, "Can't create reference database\n"); return 1; }
-     
-     fprintf(stderr, "Opening Database \"%s\"\n", dbname_ref);
-     rc = sqlite3_open(dbname_ref, &db);
-     if (rc != SQLITE_OK) { fprintf(stderr, "Can't open/create database: %s\n", sqlite3_errmsg(db)); return 1; }
-
-     fprintf(stderr, "Keying Database with key \"%s\"\n", key);
-     rc = sqlite3_key(db, key, strlen( key ));
-     if (rc != SQLITE_OK) { fprintf(stderr, "Can't key database: %s\n", sqlite3_errmsg(db)); return 1; }
-
-     fprintf(stderr, "Closing Database \"%s\"\n", dbname_ref);
-     sqlite3_close(db); 
      
      return 0;
+
+     // FIXME acceptance test, need to repair
+     {
+          int rc = SQLITE_ERROR;
+
+          rc = create_and_close_test_db( dbname_ref );
+
+          if ( rc != SQLITE_OK) { fprintf(stderr, "Can't create reference database\n"); return 1; }
+          
+          fprintf(stderr, "Opening Database \"%s\"\n", dbname_ref);
+          rc = sqlite3_open(dbname_ref, &db);
+          if (rc != SQLITE_OK) { fprintf(stderr, "Can't open/create database: %s\n", sqlite3_errmsg(db)); return 1; }
+
+          fprintf(stderr, "Keying Database with key \"%s\"\n", key);
+          rc = sqlite3_key(db, key, strlen( key ));
+          if (rc != SQLITE_OK) { fprintf(stderr, "Can't key database: %s\n", sqlite3_errmsg(db)); return 1; }
+
+          fprintf(stderr, "Closing Database \"%s\"\n", dbname_ref);
+          sqlite3_close(db); 
+          
+          return 0;
+
+     }
 }
 

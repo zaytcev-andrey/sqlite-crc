@@ -638,6 +638,10 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath=".\db_page_reader_impl.c"
+				>
+			</File>
+			<File
 				RelativePath=".\db_state.c"
 				>
 			</File>
@@ -660,13 +664,6 @@
 			<File
 				RelativePath="sqlite3.c"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="sqlite3.def"
@@ -688,6 +685,10 @@
 			</File>
 			<File
 				RelativePath=".\codec.h"
+				>
+			</File>
+			<File
+				RelativePath=".\db_page_reader_impl.h"
 				>
 			</File>
 			<File

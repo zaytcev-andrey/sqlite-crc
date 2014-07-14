@@ -183,9 +183,8 @@ int sqlite3CodecAttach(sqlite3 *db, int nDb, const void *zKey, int nKey)
                // на только что созданной не проверяется.
                if ( rc == SQLITE_OK && open_state == DB_OPENED_EXISTING )
                {
-                    Pager* pager = 0;
-                    pager = sqlite3BtreePager( pBt );
-                    rc = ReadDbFile( pager->fd, ch_codec->crc_methods );
+                    sqlite3_file* fd = int_methods.xGetDbFileDescriptor( pBt );
+                    rc = ReadDbFile( fd, ch_codec->crc_methods );
                }
           }
           sqlite3BtreeLeave( pBt );

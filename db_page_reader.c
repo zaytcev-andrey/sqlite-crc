@@ -1,20 +1,7 @@
 #include "utils.h"
 #include "i_check_crc.h"
 #include "freelist_set.h"
-
-typedef struct DB_INFO 
-{
-     db_open_state open_state;
-     int current_page_number;
-     int freelist_trunk_page_number;
-     int freelist_trunk_page_offset;
-     int total_number_of_freelist_pages; // count of all ( trunk and leaf ) pages in freelist 
-     i64 current_page_offset;
-     int page_header_offset;
-     int page_size;
-     i64 file_size;
-     unsigned char* page_buff;
-} db_info;
+#include "db_page_reader_impl.h"
 
 int InitializeDbInfo( sqlite3_file* f_db, db_info* db_i )
 {
@@ -24,7 +11,7 @@ int InitializeDbInfo( sqlite3_file* f_db, db_info* db_i )
 }
 
 static int ReadDbFile( sqlite3_file* f_db, check_crc* crc );
-static int ReadDbHeader( sqlite3_file* f_db, db_info* db_i );
+// static int ReadDbHeader( sqlite3_file* f_db, db_info* db_i );
 static int ReadDbPage( sqlite3_file* f_db, db_info* db_i, check_crc* crc );
 
 int ReadDbFile( sqlite3_file* f_db, check_crc* crc )
@@ -51,7 +38,7 @@ int ReadDbFile( sqlite3_file* f_db, check_crc* crc )
      return res;
 }
 
-int ReadDbHeader( sqlite3_file* f_db, db_info* db_i )
+/*int ReadDbHeader( sqlite3_file* f_db, db_info* db_i )
 {
      char zDbHeader[256];
      int freelist_trunk_page_number = 0;
@@ -60,6 +47,7 @@ int ReadDbHeader( sqlite3_file* f_db, db_info* db_i )
      memset( zDbHeader, 0, sizeof( zDbHeader ) );
 
      rc = sqlite3OsRead( f_db, zDbHeader, 100, 0 );
+
      if( rc == SQLITE_IOERR_SHORT_READ )
      {
           rc = SQLITE_OK;
@@ -81,7 +69,7 @@ int ReadDbHeader( sqlite3_file* f_db, db_info* db_i )
      }
 
      return rc;
-}
+}*/
 
 int ReadDbPage( sqlite3_file* f_db, db_info* db_i, check_crc* crc  )
 {
