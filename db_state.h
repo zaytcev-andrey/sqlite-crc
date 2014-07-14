@@ -5,6 +5,6 @@
 
 typedef enum { DB_OPENED_CREATING, DB_OPENED_EXISTING, DB_CLOSED } db_open_state;
 
-static int GetDbOpenState( Btree* btree, db_open_state* state, sqlite_internal_methods* int_methods );
+int GetDbOpenState( Btree* btree, db_open_state* state, sqlite_internal_methods* int_methods );
 
 #endif // db_state_h__
