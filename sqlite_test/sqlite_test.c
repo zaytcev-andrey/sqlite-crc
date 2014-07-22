@@ -17,9 +17,9 @@
 // mocks
 #include "sqlite_mocks.h"
 
-// test items
-#include "db_state.h"
-#include "db_page_reader_impl.h"
+// tests
+#include "get_db_state_test.h"
+#include "read_db_page_test.h"
 
 static const char* dbname_ref = "./testdb_ref";
 static const char* key = "anotherkey";
@@ -162,89 +162,7 @@ int create_and_close_test_db( const char* db_path )
 
 // Unit tests
 
-static Btree btree_mock;
-static sqlite_internal_methods internal_methods_;
-static sqlite3_file fd_db_;
-static sqlite3_io_methods io_methods_;
-static int file_size_;
-static db_info db_info_;
 
-sqlite3_file* mock_get_file_descriptor( Btree* btree )
-{
-     return &fd_db_;
-}
-
-int mock_get_db_file_size( sqlite3_file* fd, sqlite3_int64 *pSize )
-{
-     *pSize = file_size_;
-
-     return SQLITE_OK;
-}
-
-int setup_get_db_state()
-{
-     memset( &fd_db_, 0, sizeof( sqlite3_file ) );
-     io_methods_.xFileSize = mock_get_db_file_size;
-     internal_methods_.xGetDbFileDescriptor = mock_get_file_descriptor;
-     return 0;
-}
-
-int teardown_db_state()
-{
-     memset( &internal_methods_, 0, sizeof( sqlite_internal_methods ) );
-     memset( &fd_db_, 0, sizeof( sqlite3_file ) );
-     return 0;
-}
-
-/// @brief closed database test
-void get_db_closed_state_test()
-{
-     db_open_state open_state = DB_OPENED_EXISTING;
-
-     // closed database
-     fd_db_.pMethods = 0; 
-
-     GetDbOpenState( &btree_mock, &open_state, &internal_methods_ );
-
-     CU_ASSERT( open_state == DB_CLOSED );
-}
-
-/// @brief created database test
-void get_db_open_creating_state_test()
-{
-     db_open_state open_state = DB_CLOSED; 
-
-     // just opened database, db file does not exist
-     fd_db_.pMethods = &io_methods_;
-     file_size_ = 0;
-     
-     GetDbOpenState( &btree_mock, &open_state, &internal_methods_ );
-
-     CU_ASSERT( open_state == DB_OPENED_CREATING );
-}
-
-/// @brief existing database test
-void get_db_open_existing_state_test()
-{
-     db_open_state open_state = DB_CLOSED; 
-     const int fake_size = 1024; 
-
-     // just opened already existed database
-     fd_db_.pMethods = &io_methods_;
-     file_size_ = fake_size;
-
-     GetDbOpenState( &btree_mock, &open_state, &internal_methods_ );
-
-     CU_ASSERT( open_state == DB_OPENED_EXISTING );
-}
-
-/// @brief read database header test
-void read_db_header_test()
-{
-     ReadDbHeader( &fd_db_, &db_info_ );
-
-     CU_ASSERT( 0 );
-}
 
 int _tmain(int argc, _TCHAR* argv[])
 {
@@ -254,28 +172,10 @@ int _tmain(int argc, _TCHAR* argv[])
      CU_initialize_registry();
 
      // get db state test suite
-     {
-          CU_pSuite get_state_suite = CU_add_suite( "get db state suite"
-               , setup_get_db_state, teardown_db_state );
-
-          CU_add_test( get_state_suite
-               , "get db closed state test", get_db_closed_state_test );
-
-          CU_add_test( get_state_suite
-               , "get db creating state test", get_db_open_creating_state_test );
-
-          CU_add_test( get_state_suite
-               , "get db existing state test", get_db_open_existing_state_test );
-     }
+     get_db_state_test();
 
      // read db page test suite
-     {
-          CU_pSuite read_page_suite = CU_add_suite( "read db page test suite"
-               , 0, 0 );
-
-          CU_add_test( read_page_suite
-               , "read database header test", read_db_header_test );
-     }
+     read_db_page_test();
      
      CU_basic_set_mode( CU_BRM_VERBOSE );
      CU_set_error_action( CUEA_IGNORE );

@@ -218,6 +218,10 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath=".\get_db_state_test.c"
+				>
+			</File>
+			<File
 				RelativePath="..\i_sqlite_internal_methods.c"
 				>
 				<FileConfiguration
@@ -238,6 +242,22 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						UsePrecompiledHeader="0"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\read_db_page_test.c"
+				>
+			</File>
+			<File
+				RelativePath=".\sqlite_mocks.c"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
 					/>
 				</FileConfiguration>
 			</File>
@@ -296,6 +316,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\get_db_state_test.h"
+				>
+			</File>
+			<File
+				RelativePath=".\read_db_page_test.h"
+				>
+			</File>
+			<File
 				RelativePath=".\sqlite_mocks.h"
 				>
 			</File>
@@ -307,12 +335,6 @@
 				RelativePath=".\targetver.h"
 				>
 			</File>
-		</Filter>
-		<Filter
-			Name="Resource Files"
-			Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav"
-			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}"
-			>
 		</Filter>
 	</Files>
 	<Globals>
