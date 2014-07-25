@@ -1,0 +1,11 @@
+-		db_i	0x0016f814 {open_state=DB_OPENED_CREATING current_page_number=1 freelist_trunk_page_number=5 ...}	DB_INFO *
+		open_state	DB_OPENED_CREATING	db_open_state
+		current_page_number	1	int
+		freelist_trunk_page_number	5	int
+		freelist_trunk_page_offset	4096	int
+		total_number_of_freelist_pages	12	int
+		current_page_offset	0	__int64
+		page_header_offset	100	int
+		page_size	1024	int
+		file_size	5131264	__int64
++		page_buff	0x0052faf8 "อออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ"	unsigned char *

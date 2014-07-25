@@ -5,7 +5,7 @@
 
 int InitializeDbInfo( sqlite3_file* f_db, db_info* db_i )
 {
-     memset( &db_i, 0, sizeof( db_info ) );
+     memset( db_i, 0, sizeof( db_info ) );
 
      return sqlite3OsFileSize( f_db, &db_i->file_size );
 }

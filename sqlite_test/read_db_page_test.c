@@ -39,6 +39,31 @@ int MockMethodReadWrongSize( sqlite3_file* fd, void* buff, int iAmt, sqlite3_int
      return SQLITE_ERROR;
 }
 
+/// @brief
+int MockMethodReadHeader( sqlite3_file* fd, void* buff, int iAmt, sqlite3_int64 iOfst )
+{
+     static char header[] = 
+     { 0x53, 0x51, 0x4C, 0x69, 0x74, 0x65, 0x20, 0x66, 0x6F, 0x72, 0x6D, 0x61, 0x74, 0x20, 0x33, 0x00, 
+     0x04, 0x00, 0x01, 0x01, 0x10, 0x40, 0x20, 0x20, 0x00, 0x01, 0x87, 0xC6, 0x00, 0x00, 0x13, 0x93, 
+     0x00, 0x00, 0x00, 0x05, 0x00, 0x00, 0x00, 0x0C, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x04, 
+     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 
+     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x87, 0xC6, 
+     0x00, 0x2D, 0xE6, 0x00 };
+     
+     const int header_len = sizeof( header );     
+     CU_ASSERT( header_len == 100 );
+
+     // test passing params
+     CU_ASSERT( iAmt == 100 );
+     CU_ASSERT( iOfst == 0 );
+     
+     // copy db header in buff
+     memcpy( buff, header, sizeof( header_len ) );
+     
+     return SQLITE_OK;
+}
+
 void read_db_wrong_header_test()
 {        
      db_info info;
@@ -56,6 +81,21 @@ void read_db_wrong_header_test()
      CU_ASSERT( memcmp( &info, &empty, sizeof( db_info ) ) == 0 );
 }
 
+void read_db_header_test()
+{        
+     db_info info;
+
+     Btree* btree = GetMockBtree();
+     sqlite3_file* fd_db = GetMockFileDescriptor( btree );
+     sqlite3_io_methods* io_methods = GetMockIoMethods();
+     io_methods->xRead = MockMethodReadHeader; 
+
+     memset( &info, 0, sizeof( db_info ) );
+
+     CU_ASSERT( ReadDbHeader( fd_db, &info ) == SQLITE_OK );
+     CU_ASSERT( info.current_page_number == 1 );
+}
+
 void read_db_page_test()
 {
      CU_pSuite read_page_suite = CU_add_suite( "read db page test suite"
@@ -63,4 +103,7 @@ void read_db_page_test()
 
      CU_add_test( read_page_suite
           , "read database wrong size header test", read_db_wrong_header_test );
+
+     CU_add_test( read_page_suite
+          , "read database correct header test", read_db_header_test );
 }

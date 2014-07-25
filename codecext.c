@@ -33,7 +33,7 @@ static int SetDbReservedState( sqlite3* db, Btree* btree, check_crc* crc_impl );
 
 int SetDbReservedState( sqlite3* db, Btree* btree, check_crc* crc_impl )
 {
-     int rc = SQLITE_ERROR;
+     int rc = SQLITE_OK;
      int reserve = sqlite3BtreeGetReserve( btree );
      FILE* f_db = 0;
 
@@ -47,6 +47,8 @@ int SetDbReservedState( sqlite3* db, Btree* btree, check_crc* crc_impl )
                sqlite3Error(db, rc, "unable to reserve page space for the codec");
           }
      }
+
+     return rc;
 }
 
 void* GetPageCopyWithReservedSpace( void* data, int page_size, checked_codec* ch_codec )
